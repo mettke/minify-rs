@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct JsonMinifier {
     pub is_string: bool,
     pub escaped_quotation: u8,

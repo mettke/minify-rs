@@ -1,6 +1,6 @@
-use core::fmt;
-use core::mem;
 use html::html_minifier::HtmlMinifier;
+use std::fmt;
+use std::mem;
 
 pub struct MultiFilter<I: Iterator + fmt::Debug, P> {
     minifier: HtmlMinifier,

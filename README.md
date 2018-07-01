@@ -8,7 +8,7 @@ First add the library to the dependencies of your project like this:
 
 ```toml
 [dependencies]
-minify = "1.0"
+minify = "1.1"
 ```
 
 Afterwards you can import the library like this:

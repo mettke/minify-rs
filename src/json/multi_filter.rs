@@ -1,5 +1,5 @@
-use core::fmt;
 use json::json_minifier::JsonMinifier;
+use std::fmt;
 
 pub struct MultiFilter<I: Iterator + fmt::Debug, P> {
     minifier: JsonMinifier,

@@ -1,6 +1,6 @@
 [package]
 name = "minify"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Marc Mettke <marc@itmettke.de>"]
 
 description = "Crate for text minification. Currently supported: html, json"

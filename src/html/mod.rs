@@ -1,7 +1,11 @@
-use html::html_minifier::HtmlMinifier;
+use html::html_minifier::*;
+use html::html_read::HtmlReader;
 use html::multi_filter::MultiFilter;
+use std::fmt;
+use std::io::Read;
 
 mod html_minifier;
+mod html_read;
 mod multi_filter;
 
 /// Minifies a given String by HTML minification rules
@@ -30,89 +34,41 @@ pub fn minify(html: &str) -> String {
     MultiFilter::new(filtered, keep_element).collect()
 }
 
+/// Minifies a given Read by HTML minification rules
+///
+/// # Example
+///
+/// ```rust
+/// extern crate minify;
+/// use std::fs::File;
+/// use std::io::Read;
+/// use minify::html::minify_from_read;
+///
+/// fn main() {
+///     let mut html_minified = String::new();
+///     let mut file = File::open("tests/files/test.html").expect("file not found");
+///     minify_from_read(file).read_to_string(&mut html_minified);
+/// }
+/// ```
 #[inline]
-fn keep_element(
-    minifier: &mut HtmlMinifier,
-    item1: &char,
-    item2: Option<&char>,
-    item3: Option<&char>,
-    item4: Option<&char>,
-    item5: Option<&char>,
-) -> bool {
-    let remove_element = item1.is_ascii_control()
-        || is_comment(minifier, item1, item2, item3, item4, item5)
-        || is_whitespace_after_tag(minifier, item1)
-        || is_whitespace_before_tag_or_whitespace_or_control(item1, item2);
-    !remove_element
+pub fn minify_from_read<R: Read + fmt::Debug>(html: R) -> HtmlReader<R> {
+    HtmlReader::new(html, keep_element)
 }
 
-#[inline]
-fn is_comment(
-    minifier: &mut HtmlMinifier,
-    item1: &char,
-    item2: Option<&char>,
-    item3: Option<&char>,
-    item4: Option<&char>,
-    item5: Option<&char>,
-) -> bool {
-    if minifier.keep_removing > 0 {
-        minifier.keep_removing -= 1;
-        return true;
-    }
-    if equals_comment_start(item1, item2, item3, item4, item5) {
-        minifier.is_comment = true;
-    }
-    if minifier.is_comment {
-        if equals_comment_end(item1, item2, item3) {
-            minifier.is_comment = false;
-            minifier.keep_removing = 2;
-        }
-        return true;
-    }
-    false
-}
+#[test]
+fn removal_from_read() {
+    use std::fs::File;
 
-#[inline]
-fn equals_comment_start(
-    item1: &char,
-    item2: Option<&char>,
-    item3: Option<&char>,
-    item4: Option<&char>,
-    item5: Option<&char>,
-) -> bool {
-    item1.eq(&'<')
-        && item2.eq(&Some(&'!'))
-        && item3.eq(&Some(&'-'))
-        && item4.eq(&Some(&'-'))
-        && item5.ne(&Some(&'['))
-}
-
-#[inline]
-fn equals_comment_end(item1: &char, item2: Option<&char>, item3: Option<&char>) -> bool {
-    item1.eq(&'-') && item2.eq(&Some(&'-')) && item3.eq(&Some(&'>'))
-}
-
-#[inline]
-fn is_whitespace_before_tag_or_whitespace_or_control(item1: &char, item2: Option<&char>) -> bool {
-    if item1.is_whitespace() {
-        return match item2 {
-            Some(&'<') => true,
-            Some(&'>') => true,
-            Some(&' ') => true,
-            Some(item) if item.is_ascii_control() => true,
-            _ => false,
-        };
-    }
-    false
-}
-
-#[inline]
-fn is_whitespace_after_tag(minifier: &mut HtmlMinifier, item1: &char) -> bool {
-    if minifier.last_was_tag_start_or_end && item1.is_whitespace() {
-        return true;
-    }
-    minifier.last_was_tag_start_or_end = item1.eq(&'<') || item1.eq(&'>');
-    false
+    let file = File::open("tests/files/test.html").expect("file not found");
+    let expected: String = String::from(
+        "<html><head><!--[if lte IE 8]>Important comment test\
+         <![endif]--></head><body></body><html>",
+    );
+    let mut actual = String::new();
+    minify_from_read(file)
+        .read_to_string(&mut actual)
+        .expect("error at read");
+    assert_eq!(actual, expected);
 }
 
 #[test]

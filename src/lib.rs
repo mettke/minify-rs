@@ -6,7 +6,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! minify = "1.0"
+//! minify = "1.1"
 //! ```
 //!
 //! Afterwards you can import the library like this:
@@ -81,9 +81,8 @@
 #![cfg_attr(feature = "cargo-clippy", warn(stutter))]
 #![cfg_attr(feature = "cargo-clippy", warn(result_unwrap_used))]
 
-extern crate core;
-
 /// Minification for html content
 pub mod html;
+mod io;
 /// Minifigation for json content
 pub mod json;
