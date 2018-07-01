@@ -62,7 +62,7 @@ fn main() {
                "test2": 2
            }
        "#.into();
-    let html_minified = minify(json);
+    let json_minified = minify(json);
 }
 ```
 
