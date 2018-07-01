@@ -1,0 +1,10 @@
+[package]
+name = "minify"
+version = "1.0.0"
+authors = ["Marc Mettke <marc@itmettke.de>"]
+
+description = "Crate for text minification. Currently supported: html, json"
+homepage = "https://github.com/mettke/minify-rs"
+readme = "README.md"
+keywords = ["minify", "minification", "html", "json"]
+license = "MIT"
