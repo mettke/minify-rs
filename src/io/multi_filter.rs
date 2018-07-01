@@ -1,9 +1,8 @@
-use html::html_minifier::HtmlMinifier;
 use std::fmt;
 use std::mem;
 
-pub struct MultiFilter<I: Iterator + fmt::Debug, P> {
-    minifier: HtmlMinifier,
+pub struct MultiFilter<I: Iterator, P, M> {
+    minifier: M,
     iter: I,
     predicate: P,
     initialized: bool,
@@ -13,11 +12,11 @@ pub struct MultiFilter<I: Iterator + fmt::Debug, P> {
     item4: Option<I::Item>,
 }
 
-impl<I: Iterator + fmt::Debug, P> MultiFilter<I, P> {
+impl<I: Iterator, P, M: Default> MultiFilter<I, P, M> {
     #[inline]
     pub fn new(iter: I, predicate: P) -> Self {
         MultiFilter {
-            minifier: HtmlMinifier::new(),
+            minifier: M::default(),
             iter,
             predicate,
             initialized: false,
@@ -29,16 +28,20 @@ impl<I: Iterator + fmt::Debug, P> MultiFilter<I, P> {
     }
 }
 
-impl<I: Iterator + fmt::Debug, P> fmt::Debug for MultiFilter<I, P> {
+impl<I: Iterator + fmt::Debug, P, M> fmt::Debug for MultiFilter<I, P, M> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Filter").field("iter", &self.iter).finish()
+        f.debug_struct("Filter")
+            .field("iter", &self.iter)
+            .field("initialized", &self.initialized)
+            .finish()
     }
 }
 
-impl<I: Iterator + fmt::Debug, P> Iterator for MultiFilter<I, P>
+impl<I, P, M> Iterator for MultiFilter<I, P, M>
 where
+    I: Iterator,
     P: FnMut(
-        &mut HtmlMinifier,
+        &mut M,
         &I::Item,
         Option<&I::Item>,
         Option<&I::Item>,

@@ -1,31 +1,25 @@
-use html::html_minifier::*;
-use html::multi_filter::MultiFilter;
-use io::chars::Chars;
-use io::chars_error::CharsError;
+use io::multi_filter::MultiFilter;
+use io::unstable::{Chars, CharsError};
 use std::fmt;
+use std::fmt::Formatter;
 use std::io::{Read, Result};
 use std::iter::FilterMap;
 use std::iter::Iterator;
 use std::result;
 
-pub type HtmlReader<R> = HtmlRead<
-    R,
-    fn(&mut HtmlMinifier, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>)
-        -> bool,
->;
-type HtmlMultiFilter<R, P> =
-    MultiFilter<FilterMap<Chars<R>, fn(result::Result<char, CharsError>) -> Option<char>>, P>;
-
-#[derive(Debug)]
-pub struct HtmlRead<R: Read + fmt::Debug, P> {
-    iter: HtmlMultiFilter<R, P>,
+pub struct InternalReader<R: Read, P, M> {
+    iter: MultiFilter<
+        FilterMap<Chars<R>, fn(result::Result<char, CharsError>) -> Option<char>>,
+        P,
+        M,
+    >,
     bytes: Option<Vec<u8>>,
     pos_bytes: usize,
 }
 
-impl<R: Read + fmt::Debug, P> HtmlRead<R, P> {
+impl<R: Read, P, M: Default> InternalReader<R, P, M> {
     pub fn new(inner_reader: R, predicate: P) -> Self {
-        HtmlRead {
+        InternalReader {
             iter: MultiFilter::new(
                 Chars {
                     inner: inner_reader,
@@ -71,10 +65,21 @@ impl<R: Read + fmt::Debug, P> HtmlRead<R, P> {
     }
 }
 
-impl<R: Read + fmt::Debug, P> Read for HtmlRead<R, P>
+impl<R: Read + fmt::Debug, P, M> fmt::Debug for InternalReader<R, P, M> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.debug_struct("InternalReader")
+            .field("iter", &self.iter)
+            .field("bytes", &self.bytes)
+            .field("pos_bytes", &self.pos_bytes)
+            .finish()
+    }
+}
+
+impl<R, P, M> Read for InternalReader<R, P, M>
 where
-    P: FnMut(&mut HtmlMinifier, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>)
-        -> bool,
+    R: Read,
+    P: FnMut(&mut M, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>) -> bool,
+    M: Default,
 {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let mut pos_buffer = 0;

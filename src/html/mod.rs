@@ -1,12 +1,18 @@
 use html::html_minifier::*;
-use html::html_read::HtmlReader;
-use html::multi_filter::MultiFilter;
-use std::fmt;
+use io::multi_filter::MultiFilter;
+use io::reader::InternalReader;
 use std::io::Read;
+use std::str::Chars;
 
 mod html_minifier;
-mod html_read;
-mod multi_filter;
+
+type HtmlMethod =
+    fn(&mut HtmlMinifier, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>)
+        -> bool;
+type HtmlFilter<'a> = MultiFilter<Chars<'a>, HtmlMethod, HtmlMinifier>;
+
+/// Reader Implementation for HTML minification
+pub type Reader<R> = InternalReader<R, HtmlMethod, HtmlMinifier>;
 
 /// Minifies a given String by HTML minification rules
 ///
@@ -31,7 +37,7 @@ mod multi_filter;
 #[inline]
 pub fn minify(html: &str) -> String {
     let filtered = html.chars();
-    MultiFilter::new(filtered, keep_element).collect()
+    HtmlFilter::new(filtered, keep_element).collect()
 }
 
 /// Minifies a given Read by HTML minification rules
@@ -51,8 +57,8 @@ pub fn minify(html: &str) -> String {
 /// }
 /// ```
 #[inline]
-pub fn minify_from_read<R: Read + fmt::Debug>(html: R) -> HtmlReader<R> {
-    HtmlReader::new(html, keep_element)
+pub fn minify_from_read<R: Read>(html: R) -> Reader<R> {
+    Reader::new(html, keep_element)
 }
 
 #[test]

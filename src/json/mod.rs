@@ -1,12 +1,19 @@
-use json::json_minifier::JsonMinifier;
-use json::json_read::JsonReader;
-use json::multi_filter::MultiFilter;
-use std::fmt;
+use io::multi_filter::MultiFilter;
+use io::reader::InternalReader;
+use json::json_minifier::*;
 use std::io::Read;
+use std::iter::Iterator;
+use std::str::Chars;
 
 mod json_minifier;
-mod json_read;
-mod multi_filter;
+
+type JsonMethod =
+    fn(&mut JsonMinifier, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>)
+        -> bool;
+type JsonFilter<'a> = MultiFilter<Chars<'a>, JsonMethod, JsonMinifier>;
+
+/// Reader Implementation for JSON minification
+pub type Reader<R> = InternalReader<R, JsonMethod, JsonMinifier>;
 
 /// Minifies a given String by JSON minification rules
 ///
@@ -29,7 +36,7 @@ mod multi_filter;
 #[inline]
 pub fn minify(json: &str) -> String {
     let filtered = json.chars();
-    MultiFilter::new(filtered, keep_element).collect()
+    JsonFilter::new(filtered, keep_element).collect()
 }
 
 /// Minifies a given Read by JSON minification rules
@@ -49,36 +56,8 @@ pub fn minify(json: &str) -> String {
 /// }
 /// ```
 #[inline]
-pub fn minify_from_read<R: Read + fmt::Debug>(json: R) -> JsonReader<R> {
-    JsonReader::new(json, keep_element)
-}
-
-#[inline]
-fn keep_element(minifier: &mut JsonMinifier, item1: &char, item2: Option<&char>) -> bool {
-    let remove_element =
-        item1.is_ascii_control() || is_whitespace_outside_string(minifier, item1, item2);
-    !remove_element
-}
-
-#[inline]
-fn is_whitespace_outside_string(
-    minifier: &mut JsonMinifier,
-    item1: &char,
-    item2: Option<&char>,
-) -> bool {
-    if !minifier.is_string && item1.eq(&'"') {
-        minifier.is_string = true;
-    } else if minifier.is_string {
-        if item1.eq(&'\\') && item2.eq(&Some(&'"')) {
-            minifier.escaped_quotation = 4;
-        }
-        if minifier.escaped_quotation > 0 {
-            minifier.escaped_quotation -= 1;
-        } else if item1.eq(&'"') {
-            minifier.is_string = false;
-        }
-    }
-    !minifier.is_string && item1.is_whitespace()
+pub fn minify_from_read<R: Read>(json: R) -> Reader<R> {
+    Reader::new(json, keep_element)
 }
 
 #[test]
