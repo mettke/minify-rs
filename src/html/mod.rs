@@ -1,14 +1,20 @@
-use html::html_minifier::*;
-use io::multi_filter::MultiFilter;
-use io::reader::InternalReader;
-use std::io::Read;
-use std::str::Chars;
+use crate::{
+    html::html_minifier::{keep_element, HtmlMinifier},
+    io::{multi_filter::MultiFilter, reader::InternalReader},
+};
+use std::{io::Read, str::Chars};
 
 mod html_minifier;
 
-type HtmlMethod =
-    fn(&mut HtmlMinifier, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>)
-        -> bool;
+type HtmlMethod = fn(
+    &mut HtmlMinifier,
+    char,
+    Option<char>,
+    Option<char>,
+    Option<char>,
+    Option<char>,
+    Option<char>,
+) -> bool;
 type HtmlFilter<'a> = MultiFilter<Chars<'a>, HtmlMethod, HtmlMinifier>;
 
 /// Reader Implementation for HTML minification
@@ -35,6 +41,7 @@ pub type Reader<R> = InternalReader<R, HtmlMethod, HtmlMinifier>;
 /// }
 /// ```
 #[inline]
+#[must_use]
 pub fn minify(html: &str) -> String {
     let filtered = html.chars();
     HtmlFilter::new(filtered, keep_element).collect()
@@ -67,7 +74,7 @@ fn removal_from_read() {
 
     let file = File::open("tests/files/test.html").expect("file not found");
     let expected: String = String::from(
-        "<html><head><!--[if lte IE 8]>Important comment test\
+        "<html><head> <!--[if lte IE 8]> Important comment test \
          <![endif]--></head><body></body><html>",
     );
     let mut actual = String::new();
@@ -94,8 +101,9 @@ fn removal_of_whitespace_outside_of_tags() {
                 <body>
                 </body>
             <html>
-        "#.into();
-    let expected: String = "<html><head></head><body></body><html>".into();
+        "#
+    .into();
+    let expected: String = "<html> <head> </head> <body> </body> <html>".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -109,8 +117,9 @@ fn removal_of_whitespace_inside_of_tags() {
                 <body>
                 </body>
             <html>
-        "#.into();
-    let expected: String = "<html><head></head><body></body><html>".into();
+        "#
+    .into();
+    let expected: String = "<html> <head> </head> <body> </body> <html>".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -128,8 +137,9 @@ fn removal_of_comments_outside_of_tags() {
                 <body>
                 </body>
             <html>
-        "#.into();
-    let expected: String = "<html><head></head><body></body><html>".into();
+        "#
+    .into();
+    let expected: String = "<html> <head> </head> <body> </body> <html>".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -146,8 +156,9 @@ fn removal_of_comments_inside_of_tags() {
                 <body>
                 </body>
             <html>
-        "#.into();
-    let expected: String = "<html><head></head><body></body><html>".into();
+        "#
+    .into();
+    let expected: String = "<html> <head> </head> <body> </body> <html>".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -161,8 +172,9 @@ fn removal_of_double_whitespace_outside_of_tags() {
                 <body>
                 </body>
             <html>
-        "#.into();
-    let expected: String = "<html>test<head></head><body></body><html>".into();
+        "#
+    .into();
+    let expected: String = "<html> test <head> </head> <body> </body> <html>".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -176,8 +188,9 @@ fn keep_whitespace_between_content_but_remove_double() {
                 <body>
                 </body>
             <html>
-        "#.into();
-    let expected: String = "<html>test settings data<head></head><body></body><html>".into();
+        "#
+    .into();
+    let expected: String = "<html> test settings data <head> </head> <body> </body> <html>".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -194,11 +207,20 @@ fn keep_important_comments() {
                 <body>
                 </body>
             <html>
-        "#.into();
+        "#
+    .into();
     let expected: String = String::from(
-        "<html><head><!--[if lte IE 8]>Important comment test\
-         <![endif]--></head><body></body><html>",
+        "<html> <head> <!--[if lte IE 8]> Important comment test \
+         <![endif]--> </head> <body> </body> <html>",
     );
+    let actual = minify(input);
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn keep_important_whitespaces() {
+    let input = r#"<p>Foo <span>Bar</span> <span>Baz</span></p>"#.into();
+    let expected: String = String::from("<p>Foo <span>Bar</span> <span>Baz</span></p>");
     let actual = minify(input);
     assert_eq!(actual, expected);
 }

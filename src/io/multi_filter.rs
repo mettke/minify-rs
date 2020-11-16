@@ -1,5 +1,4 @@
-use std::fmt;
-use std::mem;
+use std::{fmt, mem};
 
 pub struct MultiFilter<I: Iterator, P, M> {
     minifier: M,
@@ -10,12 +9,13 @@ pub struct MultiFilter<I: Iterator, P, M> {
     item2: Option<I::Item>,
     item3: Option<I::Item>,
     item4: Option<I::Item>,
+    item5: Option<I::Item>,
 }
 
 impl<I: Iterator, P, M: Default> MultiFilter<I, P, M> {
     #[inline]
     pub fn new(iter: I, predicate: P) -> Self {
-        MultiFilter {
+        Self {
             minifier: M::default(),
             iter,
             predicate,
@@ -24,6 +24,7 @@ impl<I: Iterator, P, M: Default> MultiFilter<I, P, M> {
             item2: None,
             item3: None,
             item4: None,
+            item5: None,
         }
     }
 }
@@ -37,16 +38,18 @@ impl<I: Iterator + fmt::Debug, P, M> fmt::Debug for MultiFilter<I, P, M> {
     }
 }
 
-impl<I, P, M> Iterator for MultiFilter<I, P, M>
+impl<I, It, P, M> Iterator for MultiFilter<I, P, M>
 where
-    I: Iterator,
+    I: Iterator<Item = It>,
+    It: Copy,
     P: FnMut(
         &mut M,
-        &I::Item,
-        Option<&I::Item>,
-        Option<&I::Item>,
-        Option<&I::Item>,
-        Option<&I::Item>,
+        I::Item,
+        Option<I::Item>,
+        Option<I::Item>,
+        Option<I::Item>,
+        Option<I::Item>,
+        Option<I::Item>,
     ) -> bool,
 {
     type Item = I::Item;
@@ -58,6 +61,7 @@ where
             self.item2 = self.iter.next();
             self.item3 = self.iter.next();
             self.item4 = self.iter.next();
+            self.item5 = self.iter.next();
             self.initialized = true;
         }
 
@@ -65,15 +69,17 @@ where
             mem::swap(&mut self.item1, &mut self.item2);
             mem::swap(&mut self.item2, &mut self.item3);
             mem::swap(&mut self.item3, &mut self.item4);
-            self.item4 = self.iter.next();
+            mem::swap(&mut self.item4, &mut self.item5);
+            self.item5 = self.iter.next();
 
             if (self.predicate)(
                 &mut self.minifier,
-                &item,
-                self.item1.as_ref(),
-                self.item2.as_ref(),
-                self.item3.as_ref(),
-                self.item4.as_ref(),
+                item,
+                self.item1,
+                self.item2,
+                self.item3,
+                self.item4,
+                self.item5,
             ) {
                 return Some(item);
             }

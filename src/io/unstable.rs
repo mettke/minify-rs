@@ -1,10 +1,5 @@
-use std::error;
-use std::fmt;
-use std::io::Error;
-use std::io::ErrorKind;
-use std::io::Read;
-use std::result;
-use std::str::from_utf8;
+use std::{fmt, result, error, str::from_utf8};
+use std::io::{Error, ErrorKind, Read};
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -54,7 +49,7 @@ impl<R: Read> Iterator for Chars<R> {
     }
 }
 
-fn read_one_byte(reader: &mut Read) -> Option<Result<u8>> {
+fn read_one_byte(reader: &mut dyn Read) -> Option<Result<u8>> {
     let mut buf = [0];
     loop {
         return match reader.read(&mut buf) {
@@ -102,26 +97,20 @@ pub enum CharsError {
     Other(Error),
 }
 
-impl error::Error for CharsError {
-    fn description(&self) -> &str {
+impl fmt::Display for CharsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            CharsError::NotUtf8 => "invalid utf8 encoding",
-            CharsError::Other(ref e) => Error::description(e),
-        }
-    }
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            CharsError::NotUtf8 => None,
-            CharsError::Other(ref e) => e.cause(),
+            Self::NotUtf8 => write!(f, "byte stream did not contain valid utf8"),
+            Self::Other(ref e) => e.fmt(f),
         }
     }
 }
 
-impl fmt::Display for CharsError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl error::Error for CharsError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
-            CharsError::NotUtf8 => "byte stream did not contain valid utf8".fmt(f),
-            CharsError::Other(ref e) => e.fmt(f),
+            Self::NotUtf8 => None,
+            Self::Other(ref e) => Some(e),
         }
     }
 }

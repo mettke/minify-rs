@@ -1,15 +1,20 @@
-use io::multi_filter::MultiFilter;
-use io::reader::InternalReader;
-use json::json_minifier::*;
-use std::io::Read;
-use std::iter::Iterator;
-use std::str::Chars;
+use crate::{
+    io::{multi_filter::MultiFilter, reader::InternalReader},
+    json::json_minifier::{keep_element, JsonMinifier},
+};
+use std::{io::Read, iter::Iterator, str::Chars};
 
 mod json_minifier;
 
-type JsonMethod =
-    fn(&mut JsonMinifier, &char, Option<&char>, Option<&char>, Option<&char>, Option<&char>)
-        -> bool;
+type JsonMethod = fn(
+    &mut JsonMinifier,
+    char,
+    Option<char>,
+    Option<char>,
+    Option<char>,
+    Option<char>,
+    Option<char>,
+) -> bool;
 type JsonFilter<'a> = MultiFilter<Chars<'a>, JsonMethod, JsonMinifier>;
 
 /// Reader Implementation for JSON minification
@@ -34,6 +39,7 @@ pub type Reader<R> = InternalReader<R, JsonMethod, JsonMinifier>;
 /// }
 /// ```
 #[inline]
+#[must_use]
 pub fn minify(json: &str) -> String {
     let filtered = json.chars();
     JsonFilter::new(filtered, keep_element).collect()
@@ -89,7 +95,8 @@ fn removal_of_whitespace_outside_of_tags() {
               "test2": "",
               "test3": " "
             }
-        "#.into();
+        "#
+    .into();
     let expected: String = "{\"test\":\"\\\" test2\",\"test2\":\"\",\"test3\":\" \"}".into();
     let actual = minify(input);
     assert_eq!(actual, expected);
