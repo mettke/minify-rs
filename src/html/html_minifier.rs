@@ -5,6 +5,7 @@ pub struct HtmlMinifier {
     pub last_was_tag_start: bool,
     pub last_was_tag_end: bool,
     pub is_comment: bool,
+    pub is_pre: bool,
 }
 
 impl Default for HtmlMinifier {
@@ -21,6 +22,7 @@ impl HtmlMinifier {
             last_was_tag_start: false,
             last_was_tag_end: false,
             is_comment: false,
+            is_pre: false,
         }
     }
 }
@@ -37,10 +39,14 @@ pub fn keep_element(
 ) -> bool {
     let remove_element = item1.is_ascii_control()
         || is_comment(minifier, item1, item2, item3, item4, item5, item6)
+        || is_pre(minifier, item1, item2, item3, item4)
         || is_whitespace_after_tag(minifier, item1, item2)
         || is_whitespace_before_tag_or_whitespace_or_control(minifier, item1, item2);
     if !remove_element {
         minifier.begin = false;
+    }
+    if minifier.is_pre {
+        return true;
     }
     !remove_element
 }
@@ -73,6 +79,25 @@ pub fn is_comment(
 }
 
 #[inline]
+pub fn is_pre(
+    minifier: &mut HtmlMinifier,
+    item1: char,
+    item2: Option<char>,
+    item3: Option<char>,
+    item4: Option<char>,
+) -> bool {
+    if minifier.last_was_tag_start {
+        if minifier.is_pre && equals_pre_end(item1, item2, item3, item4) {
+            minifier.is_pre = false;
+        }
+        if equals_pre_start(item1, item2, item3) {
+            minifier.is_pre = true;
+        }
+    }
+    false
+}
+
+#[inline]
 pub fn equals_comment_start(
     item1: char,
     item2: Option<char>,
@@ -97,6 +122,30 @@ pub fn equals_comment_start(
 #[inline]
 pub fn equals_comment_end(item1: char, item2: Option<char>, item3: Option<char>) -> bool {
     item1.eq(&'-') && item2.eq(&Some('-')) && item3.eq(&Some('>'))
+}
+
+#[inline]
+pub fn equals_pre_start(
+    item1: char,
+    item2: Option<char>,
+    item3: Option<char>,
+) -> bool {
+    item1.eq(&'p')
+        && item2.eq(&Some('r'))
+        && item3.eq(&Some('e'))
+}
+
+#[inline]
+pub fn equals_pre_end(
+    item1: char,
+    item2: Option<char>,
+    item3: Option<char>,
+    item4: Option<char>,
+) -> bool {
+    item1.eq(&'/')
+        && item2.eq(&Some('p'))
+        && item3.eq(&Some('r'))
+        && item4.eq(&Some('e'))
 }
 
 #[inline]

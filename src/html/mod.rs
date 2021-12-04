@@ -213,3 +213,15 @@ fn keep_important_whitespaces() {
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
+
+#[test]
+fn keep_pre() {
+    let input = r#"<pre>
+    should respect this          does it?
+</pre>"#;
+    let expected = r#"<pre>
+    should respect this          does it?
+</pre>"#;
+    let actual = minify(input);
+    assert_eq!(actual, expected);
+}
