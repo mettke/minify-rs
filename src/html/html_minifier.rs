@@ -108,7 +108,7 @@ pub fn is_whitespace_before_tag_or_whitespace_or_control(
     if item1.is_whitespace() {
         return match item2 {
             Some('<') if minifier.begin => true,
-            Some('>') | Some(' ') => true,
+            Some('>' | ' ') => true,
             Some(item) if item.is_ascii_control() => true,
             _ => false,
         };

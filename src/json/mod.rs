@@ -34,7 +34,7 @@ pub type Reader<R> = InternalReader<R, JsonMethod, JsonMinifier>;
 ///                "test": "test",
 ///                "test2": 2
 ///            }
-///        "#.into();
+///        "#;
 ///     let json_minified = minify(json);
 /// }
 /// ```
@@ -71,9 +71,9 @@ fn removal_from_read() {
     use std::fs::File;
 
     let file = File::open("tests/files/test.json").expect("file not found");
-    let expected: String = "{\"test\":\"\\\" test2\",\"test2\":\"\",\"test3\":\" \"}".into();
+    let expected = "{\"test\":\"\\\" test2\",\"test2\":\"\",\"test3\":\" \"}";
     let mut actual = String::new();
-    minify_from_read(file)
+    let _ = minify_from_read(file)
         .read_to_string(&mut actual)
         .expect("error at read");
     assert_eq!(actual, expected);
@@ -81,8 +81,8 @@ fn removal_from_read() {
 
 #[test]
 fn removal_of_control_characters() {
-    let input = "\n".into();
-    let expected: String = "".into();
+    let input = "\n";
+    let expected = "";
     let actual = minify(input);
     assert_eq!(actual, expected);
 }
@@ -95,9 +95,8 @@ fn removal_of_whitespace_outside_of_tags() {
               "test2": "",
               "test3": " "
             }
-        "#
-    .into();
-    let expected: String = "{\"test\":\"\\\" test2\",\"test2\":\"\",\"test3\":\" \"}".into();
+        "#;
+    let expected = "{\"test\":\"\\\" test2\",\"test2\":\"\",\"test3\":\" \"}";
     let actual = minify(input);
     assert_eq!(actual, expected);
 }

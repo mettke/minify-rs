@@ -37,7 +37,7 @@
 //!             <body>
 //!             </body>
 //!         <html>
-//!     "#.into();
+//!     "#;
 //!     let html_minified = minify(html);
 //! }
 //! ```
@@ -59,7 +59,7 @@
 //!                "test": "test",
 //!                "test2": 2
 //!            }
-//!        "#.into();
+//!        "#;
 //!     let json_minified = minify(json);
 //! }
 //! ```
@@ -77,12 +77,9 @@
     macro_use_extern_crate,
     meta_variable_misuse,
     missing_copy_implementations,
-    missing_crate_level_docs,
     missing_debug_implementations,
     missing_docs,
-    missing_doc_code_examples,
     non_ascii_idents,
-    private_doc_tests,
     single_use_lifetimes,
     trivial_casts,
     trivial_numeric_casts,

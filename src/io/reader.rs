@@ -9,8 +9,7 @@ use std::{
     result,
 };
 
-pub type Filter<R> =
-    FilterMap<Chars<R>, fn(result::Result<char, CharsError>) -> Option<char>>;
+pub type Filter<R> = FilterMap<Chars<R>, fn(result::Result<char, CharsError>) -> Option<char>>;
 
 pub struct InternalReader<R: Read, P, M> {
     iter: MultiFilter<Filter<R>, P, M>,

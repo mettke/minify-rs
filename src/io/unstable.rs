@@ -1,5 +1,5 @@
-use std::{fmt, result, error, str::from_utf8};
 use std::io::{Error, ErrorKind, Read};
+use std::{error, fmt, result, str::from_utf8};
 
 pub type Result<T> = result::Result<T, Error>;
 

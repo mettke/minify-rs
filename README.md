@@ -39,7 +39,7 @@ fn main() {
             <body>
             </body>
         <html>
-    "#.into();
+    "#;
     let html_minified = minify(html);
 }
 ```
@@ -61,7 +61,7 @@ fn main() {
                "test": "test",
                "test2": 2
            }
-       "#.into();
+       "#;
     let json_minified = minify(json);
 }
 ```
